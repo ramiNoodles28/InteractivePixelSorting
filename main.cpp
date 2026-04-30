@@ -276,6 +276,9 @@ void createIMGuiWindow() {
 				mesh = nullptr;
 			}
 		}
+		if (ImGui::Button("Refresh Asset List")) {
+			updateAssetList("models", modelFiles, modelLabels);
+		}
 	}
 	else {
 		if (ImGui::Combo("Select Photo", &currPhotoIdx, photoLabels.data(), (int)photoLabels.size())) {
@@ -285,7 +288,12 @@ void createIMGuiWindow() {
 			}
 			photoTexID = loadTexture(photoFiles[currPhotoIdx].c_str());
 		}
+		if (ImGui::Button("Refresh Asset List")) {
+			updateAssetList("photos", photoFiles, photoLabels);
+		}
 	}
+
+	
 
 	static int currentSort = 2;
 

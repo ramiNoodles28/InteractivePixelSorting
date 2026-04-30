@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{37C8136B-859E-4022-A13B-35B27A6637D2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>base_freeglut</RootNamespace>
+    <RootNamespace>PixelSorting</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>PixelSorting</ProjectName>
   </PropertyGroup>

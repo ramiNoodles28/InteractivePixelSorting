@@ -173,7 +173,6 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
-    <ClCompile Include="pixelSorter.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -181,7 +180,6 @@
     <ClInclude Include="include\stb\stb_image.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="mesh.hpp" />
-    <ClInclude Include="pixelSorter.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="util.hpp" />
   </ItemGroup>

@@ -55,7 +55,6 @@ GLuint overlayShader;
 GLuint screenTexID;
 GLuint quadVAO, quadVBO;
 vector<uint8_t> pixelData;
-vector<uint8_t> pixelMask;
 float minThresh;
 float maxThresh;
 bool flipSortDir;
@@ -79,6 +78,7 @@ struct Rect { float minX, minY, maxX, maxY; };
 vector<string> photoFiles;
 vector<const char*> photoLabels;
 int currPhotoIdx = 0;
+int photoW, photoH;
 
 
 // Initialization functions

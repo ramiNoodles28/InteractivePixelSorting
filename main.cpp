@@ -241,16 +241,26 @@ void MeshMode() {
 }
 
 void PhotoMode() {
-	//MeshMode();
 	glUseProgram(overlayShader);
-	glDisable(GL_DEPTH_TEST); // No depth needed for a flat photo
-
-	// 2. Set up a simple Identity or Ortho matrix
-	// If your quad is already -1 to 1, mat4(1.0f) will fill the screen perfectly
-	mat4 identity = mat4(1.0f);
-	glUniformMatrix4fv(glGetUniformLocation(overlayShader, "xform"), 1, GL_FALSE, value_ptr(identity));
-
+	glDisable(GL_DEPTH_TEST); 
 	if (photoTexID == 0) photoTexID = loadTexture("photos/arches.jpg");
+
+	float windowAsp = (float)width / (float)height;
+	float photoAsp = (float)photoW / (float)photoH;
+
+	mat4 model2D = mat4(1.0f);
+	if (photoAsp > windowAsp) {
+		// Image is wider than window (Letterbox top/bottom)
+		model2D = scale(mat4(1.0f), vec3(1.0f, windowAsp / photoAsp, 1.0f));
+	}
+	else {
+		// Image is taller than window (Pillarbox sides)
+		model2D = scale(mat4(1.0f), vec3(photoAsp / windowAsp, 1.0f, 1.0f));
+	}
+
+	glUniformMatrix4fv(glGetUniformLocation(overlayShader, "xform"), 1, GL_FALSE, value_ptr(model2D));
+
+	
 
 	// 3. Bind the photo and draw the quad
 	glBindTexture(GL_TEXTURE_2D, photoTexID);
@@ -321,10 +331,10 @@ void createIMGuiWindow() {
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void reshape(GLint width, GLint height) {
-	::width = width;
-	::height = height;
-	glViewport(0, 0, width, height);
+void reshape(GLint w, GLint h) {
+	width = w;
+	height = h;
+	glViewport(0, 0, w, h);
 	pixelData.resize(width * height * 4);
 }
 
@@ -588,11 +598,17 @@ GLuint loadTexture(const char* path) {
 	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &w, &h, &channels, 4); // Force RGBA
 
+	photoW = w; photoH = h;
+
+	if (data) {
+		//glutReshapeWindow(w/10, h/10);
+	}
+
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
-	if (tex) {
+	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}

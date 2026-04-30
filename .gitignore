@@ -1,0 +1,4 @@
+# Ignore these temp/build directories
+bin/
+.vs/
+*.TMP

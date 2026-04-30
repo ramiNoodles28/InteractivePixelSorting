@@ -1,0 +1,23 @@
+﻿  gl_core_3_3.c
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_glut.cpp
+  imgui_impl_opengl3.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  main.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\main.cpp(43,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  mesh.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\mesh.cpp(119,24): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\mesh.cpp(151,19): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\mesh.cpp(154,13): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  pixelSorter.cpp
+  util.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\util.cpp(20,15): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+  Generating code
+  3462 of 3486 functions (99.3%) were compiled, the rest were copied from previous compilation.
+    55 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  base_freeglut.vcxproj -> C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\PixelSorting\x64\Release\PixelSorting.exe

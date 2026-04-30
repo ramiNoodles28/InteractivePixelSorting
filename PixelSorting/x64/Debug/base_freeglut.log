@@ -1,0 +1,19 @@
+﻿  gl_core_3_3.c
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_glut.cpp
+  imgui_impl_opengl3.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  main.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\main.cpp(43,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  mesh.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\mesh.cpp(119,24): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\mesh.cpp(151,19): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\mesh.cpp(154,13): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  pixelSorter.cpp
+  util.cpp
+C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\util.cpp(20,15): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+  Generating Code...
+  base_freeglut.vcxproj -> C:\Users\the_h\Documents\Purdue HW\cs 535\A0_rhage\assignment0\base_freeglut\x64\Debug\PixelSorting.exe

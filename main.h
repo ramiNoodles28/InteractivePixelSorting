@@ -80,6 +80,10 @@ vector<const char*> photoLabels;
 int currPhotoIdx = 0;
 int photoW, photoH;
 
+vector<string> skyboxFolders;
+vector<const char*> skyboxLabels;
+int currSkyboxIdx = 0;
+
 // Skybox
 GLuint skyboxShader;
 GLint projLoc, viewLoc;
@@ -108,6 +112,7 @@ void cleanup();
 GLuint loadTexture(const char* path);
 GLuint loadCubemap(vector<string> faces);
 void setupSkybox();
+void updateSkybox();
 
 // pixel sorting functions
 void sortPixelsHorizontal();

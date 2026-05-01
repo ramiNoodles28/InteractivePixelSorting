@@ -47,6 +47,7 @@ void initState() {
 	// updating photo/model lists
 	updateAssetList("photos", photoFiles, photoLabels);
 	updateAssetList("models", modelFiles, modelLabels);
+	updateAssetList("skybox", skyboxFolders, skyboxLabels);
 
 	camCoords = vec3(0.0, 0.0, 1.0);
 	camRot = false;
@@ -105,11 +106,7 @@ void initOpenGL() {
 
 	projLoc = glGetUniformLocation(skyboxShader, "projection");
 	viewLoc = glGetUniformLocation(skyboxShader, "view");
-	vector<string> faces = {
-		"skybox/posx.jpg", "skybox/negx.jpg", "skybox/posy.jpg", 
-		"skybox/negy.jpg", "skybox/posz.jpg", "skybox/negz.jpg"
-	};
-	cubemapTexture = loadCubemap(faces);
+	updateSkybox();
 	setupSkybox();
 	
 	float quadVertices[] = { //image plane that pixels are sorted on
@@ -316,8 +313,8 @@ void createIMGuiWindow() {
 				mesh = nullptr;
 			}
 		}
-		if (ImGui::Button("Refresh Asset List")) {
-			updateAssetList("models", modelFiles, modelLabels);
+		if (ImGui::Combo("Select Skybox", &currSkyboxIdx, skyboxLabels.data(), (int)skyboxLabels.size())) {
+			updateSkybox();
 		}
 	}
 	else {
@@ -328,11 +325,14 @@ void createIMGuiWindow() {
 			}
 			photoTexID = loadTexture(photoFiles[currPhotoIdx].c_str());
 		}
-		if (ImGui::Button("Refresh Asset List")) {
-			updateAssetList("photos", photoFiles, photoLabels);
-		}
+		
 	}
-
+	if (ImGui::Button("Refresh Asset Lists")) {
+		updateAssetList("photos", photoFiles, photoLabels);
+		updateAssetList("models", modelFiles, modelLabels);
+		updateAssetList("skybox", skyboxFolders, skyboxLabels);
+	}
+	
 	
 
 	static int currentSort = 2;
@@ -611,8 +611,11 @@ void updateAssetList(const string& folderPath, vector<string>& files,
 		// Check for common image extensions
 		if (folderPath == "photos" && ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
 			files.push_back(entry.path().string());
-		}
+		} 
 		else if (folderPath == "models" && ext == ".obj") {
+			files.push_back(entry.path().string());
+		} 
+		else if (folderPath == "skybox") {
 			files.push_back(entry.path().string());
 		}
 	}
@@ -736,3 +739,20 @@ void setupSkybox() {
 	glBindVertexArray(0);
 }
 
+void updateSkybox() {
+	// 1. Delete the old texture if it exists
+	if (cubemapTexture != 0) {
+		glDeleteTextures(1, &cubemapTexture);
+	}
+
+	vector<string> skyboxPaths = {
+			skyboxFolders[currSkyboxIdx] + "\\posx.jpg",
+			skyboxFolders[currSkyboxIdx] + "\\negx.jpg",
+			skyboxFolders[currSkyboxIdx] + "\\posy.jpg",
+			skyboxFolders[currSkyboxIdx] + "\\negy.jpg",
+			skyboxFolders[currSkyboxIdx] + "\\posz.jpg",
+			skyboxFolders[currSkyboxIdx] + "\\negz.jpg"
+	};
+
+	cubemapTexture = loadCubemap(skyboxPaths);
+}

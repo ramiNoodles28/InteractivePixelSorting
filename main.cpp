@@ -23,8 +23,8 @@ int main(int argc, char** argv) {
 //// initializing functions //////////////////////////////////////////////////
 void initState() {
 	// initialize global state
-	width = 1200;
-	height = 900;
+	width = 1600;
+	height = 1000;
 	shader = 0;
 	uniXform = 0;
 	vao = 0;

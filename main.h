@@ -64,8 +64,8 @@ enum sortType { HUE, SAT, LUM,
 const char* sortItems[] = { "Hue", "Saturation", "Luminance", 
 							"Red", "Green", "Blue" };
 sortType sType;
-bool useMask;							// are we using the luminance mask for sorting?
-bool showMask;							// do we want to show the threshold mask?
+bool limitSpans;							// are we using the luminance mask for sorting?
+bool showMask;							// do we want to limit the span length
 int randOff;							// spans' random offset
 int noiseAmount;						// amount of variance between span length
 int maxSpanLength;						// max length of any span

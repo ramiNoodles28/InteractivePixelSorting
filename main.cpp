@@ -37,6 +37,7 @@ void initState() {
 	sType = LUM;
 	minThresh = 50;
 	maxThresh = 200;
+	limitSpans = false;
 	isVertSort = false;
 	flipSortDir = false;
 	srand(time(0));
@@ -263,7 +264,7 @@ void MeshMode() {
 void PhotoMode() {
 	glUseProgram(overlayShader);
 	glDisable(GL_DEPTH_TEST); 
-	if (photoTexID == 0) photoTexID = loadTexture("photos/arches.jpg");
+	if (photoTexID == 0) photoTexID = loadTexture("photos/clemente.jpg");
 
 	glUniformMatrix4fv(glGetUniformLocation(overlayShader, "xform"), 1, GL_FALSE, value_ptr(mat4(1.0f)));
 
@@ -318,9 +319,9 @@ void createIMGuiWindow() {
 	ImGui::SliderFloat("Max Threshold", &maxThresh, 0.0f, 255.0f);
 
 	ImGui::Checkbox("Show Mask", &showMask);
-	ImGui::Checkbox("Use Mask for sorting", &useMask);
-	if (!useMask) {
-		ImGui::SliderInt("Max Span Length", &maxSpanLength, 2, 256);
+	ImGui::Checkbox("Limit Span Length", &limitSpans);
+	if (limitSpans) {
+		ImGui::SliderInt("Max Span Length", &maxSpanLength, 2, 500);
 		ImGui::SliderInt("Noise Amount", &noiseAmount, 2, 100);
 	}
 	ImGui::Checkbox("Flip Sort Direction", &flipSortDir);
@@ -484,7 +485,7 @@ void sortPixelsHorizontal() {
 
 			// find the end of that span
 			// if using mask, go until pixel is outside of threshold
-			if (useMask) while (x < width && isColorInThresh(row[x])) x++;
+			if (!limitSpans) while (x < width && isColorInThresh(row[x])) x++;
 			// if not using mask, length is determined by computed span length
 			else { x += (rand() % noiseAmount) + randOff; x = x >= width ? width : x; }
 			int end = x;
@@ -514,7 +515,7 @@ void sortPixelsVertical() {
 
 			// find the end of that span
 			// if using mask, go until pixel is outside of threshold
-			if (useMask) while (y < height && isColorInThresh(column[y])) y++;
+			if (!limitSpans) while (y < height && isColorInThresh(column[y])) y++;
 			// if not using mask, length is determined by computed span length
 			else { y += (rand() % noiseAmount) + randOff; y = y >= height ? height : y; }
 			int end = y;

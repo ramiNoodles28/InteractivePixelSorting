@@ -80,6 +80,11 @@ vector<const char*> photoLabels;
 int currPhotoIdx = 0;
 int photoW, photoH;
 
+// Skybox
+GLuint skyboxShader;
+GLint projLoc, viewLoc;
+GLuint cubemapTexture;
+GLuint skyboxVAO, skyboxVBO;
 
 // Initialization functions
 void initState();
@@ -101,6 +106,8 @@ void mouseMove(int x, int y);
 void idle();
 void cleanup();
 GLuint loadTexture(const char* path);
+GLuint loadCubemap(vector<string> faces);
+void setupSkybox();
 
 // pixel sorting functions
 void sortPixelsHorizontal();

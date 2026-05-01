@@ -83,4 +83,12 @@
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="sh_v_skybox.glsl">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="sh_f_skybox.glsl">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

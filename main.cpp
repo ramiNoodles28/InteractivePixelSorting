@@ -85,8 +85,7 @@ void initOpenGL() {
 	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
 	shader = linkProgram(shaders);
 	// Release shader sources
-	for (auto s = shaders.begin(); s != shaders.end(); ++s)
-		glDeleteShader(*s);
+	for (auto s : shaders) glDeleteShader(s);
 	shaders.clear();
 	// Locate uniforms
 	uniXform = glGetUniformLocation(shader, "xform");
@@ -97,6 +96,21 @@ void initOpenGL() {
 	overlayShader = linkProgram(shaders);
 	for (auto s : shaders) glDeleteShader(s);
 	shaders.clear();
+
+	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v_skybox.glsl"));
+	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f_skybox.glsl"));
+	skyboxShader = linkProgram(shaders);
+	for (auto s : shaders) glDeleteShader(s);
+	shaders.clear();
+
+	projLoc = glGetUniformLocation(skyboxShader, "projection");
+	viewLoc = glGetUniformLocation(skyboxShader, "view");
+	vector<string> faces = {
+		"skybox/posx.jpg", "skybox/negx.jpg", "skybox/posy.jpg", 
+		"skybox/negy.jpg", "skybox/posz.jpg", "skybox/negz.jpg"
+	};
+	cubemapTexture = loadCubemap(faces);
+	setupSkybox();
 	
 	float quadVertices[] = { //image plane that pixels are sorted on
 		// positions (x, y)   // texCoords (u, v)
@@ -238,6 +252,22 @@ void MeshMode() {
 	glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
 	// Draw the mesh
 	mesh->draw();
+
+	// 2. Setup Skybox rendering
+	glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
+	glUseProgram(skyboxShader);
+
+	// Pass Proj and View (View must be mat4(mat3(view)) in shader to stay centered)
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view*rot));
+
+	glBindVertexArray(skyboxVAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	glDepthFunc(GL_LESS); // Reset depth function
 }
 
 void PhotoMode() {
@@ -600,6 +630,7 @@ GLuint loadTexture(const char* path) {
 
 	photoW = w; photoH = h;
 
+	// trying to scale window to image sizes
 	if (data) {
 		//glutReshapeWindow(w/10, h/10);
 	}
@@ -616,5 +647,92 @@ GLuint loadTexture(const char* path) {
 
 	stbi_image_free(data);
 	return tex;
+}
+
+GLuint loadCubemap(vector<string> faces) {
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
+
+	int w, h, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++) {
+		unsigned char* data = stbi_load(faces[i].c_str(), &w, &h, &nrChannels, 0);
+		if (data) {
+			// Target specific face: GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc.
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			stbi_image_free(data);
+		}
+		else {
+			cout << "Cubemap face failed to load at path: " << faces[i] << endl;
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return texID;
+}
+
+void setupSkybox() {
+	glGenVertexArrays(1, &skyboxVAO);
+	glGenBuffers(1, &skyboxVBO);
+
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	glBindVertexArray(skyboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	// Unbind to stay clean
+	glBindVertexArray(0);
 }
 

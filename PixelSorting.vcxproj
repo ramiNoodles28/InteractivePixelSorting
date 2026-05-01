@@ -189,6 +189,10 @@
     <None Include="sh_v.glsl" />
     <None Include="sh_v_overlay.glsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="sh_v_skybox.glsl" />
+    <Text Include="sh_f_skybox.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

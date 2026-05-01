@@ -65,6 +65,7 @@ const char* sortItems[] = { "Hue", "Saturation", "Luminance",
 							"Red", "Green", "Blue" };
 sortType sType;
 bool useMask;							// are we using the luminance mask for sorting?
+bool showMask;							// do we want to show the threshold mask?
 int randOff;							// spans' random offset
 int noiseAmount;						// amount of variance between span length
 int maxSpanLength;						// max length of any span
@@ -118,6 +119,7 @@ void setupSkybox();
 void updateSkybox();
 
 // pixel sorting functions
+void debugMask();
 void sortPixelsHorizontal();
 void sortPixelsVertical();
 float getHue(uint32_t c);

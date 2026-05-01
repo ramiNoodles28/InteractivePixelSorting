@@ -179,7 +179,8 @@ void display() {
 		pixelData.resize(width * height * 4);
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData.data());
 		/////// PIXEL SORTING!! ////////
-		if (isVertSort) sortPixelsVertical(); else sortPixelsHorizontal();
+		if (showMask) debugMask();
+		else if (isVertSort) sortPixelsVertical(); else sortPixelsHorizontal();
 		////////////////////////////////
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(overlayShader);
@@ -301,7 +302,6 @@ void createIMGuiWindow() {
 			}
 			photoTexID = loadTexture(photoFiles[currPhotoIdx].c_str());
 		}
-		
 	}
 	if (ImGui::Button("Refresh Asset Lists")) {
 		updateAssetList("photos", photoFiles, photoLabels);
@@ -317,6 +317,7 @@ void createIMGuiWindow() {
 	ImGui::SliderFloat("Min Threshold", &minThresh, 0.0f, 255.0f);
 	ImGui::SliderFloat("Max Threshold", &maxThresh, 0.0f, 255.0f);
 
+	ImGui::Checkbox("Show Mask", &showMask);
 	ImGui::Checkbox("Use Mask for sorting", &useMask);
 	if (!useMask) {
 		ImGui::SliderInt("Max Span Length", &maxSpanLength, 2, 256);
@@ -324,7 +325,7 @@ void createIMGuiWindow() {
 	}
 	ImGui::Checkbox("Flip Sort Direction", &flipSortDir);
 	ImGui::Checkbox("Sort Vertically", &isVertSort);
-
+	
 	ImGui::End();
 
 	// rendering ImGui
@@ -461,6 +462,15 @@ void cleanup() {
 }
 
 //// pixel sorting functions //////////////////////////////////////////////
+void debugMask() {
+	for (int y = 0; y < height; y++) {
+		uint32_t* row = (uint32_t*)&pixelData[y * width * 4];
+		for (int x = 0; x < width; x++) {
+			row[x] = isColorInThresh(row[x]) ? 0xFFFFFFFF : 0xFF000000;
+		}
+	}
+}
+
 void sortPixelsHorizontal() {
 	// sort spans by row
 	for (int y = 0; y < height; y++) {

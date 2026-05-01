@@ -322,7 +322,6 @@ void createIMGuiWindow() {
 		ImGui::SliderInt("Max Span Length", &maxSpanLength, 2, 256);
 		ImGui::SliderInt("Noise Amount", &noiseAmount, 2, 100);
 	}
-	ImGui::Checkbox("Jitter Toggle", &spanjitter);
 	ImGui::Checkbox("Flip Sort Direction", &flipSortDir);
 	ImGui::Checkbox("Sort Vertically", &isVertSort);
 
@@ -444,7 +443,7 @@ void mouseMove(int x, int y) {
 }
 
 void idle() {
-	if (spanjitter)	randOff = (rand() % noiseAmount);
+	randOff = (maxSpanLength % rand());
 }
 
 void cleanup() {
@@ -477,7 +476,7 @@ void sortPixelsHorizontal() {
 			// if using mask, go until pixel is outside of threshold
 			if (useMask) while (x < width && isColorInThresh(row[x])) x++;
 			// if not using mask, length is determined by computed span length
-			else { x += (rand() % maxSpanLength) + randOff; x = x >= width ? width : x; }
+			else { x += (rand() % noiseAmount) + randOff; x = x >= width ? width : x; }
 			int end = x;
 
 			// sort only that segment

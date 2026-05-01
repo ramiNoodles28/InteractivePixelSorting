@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
 
 //// initializing functions //////////////////////////////////////////////////
 void initState() {
-	// Initialize global state
+	// initialize global state
 	width = 1200;
 	height = 900;
 	shader = 0;
@@ -31,7 +31,6 @@ void initState() {
 	vbuf = 0;
 	vcount = 0;
 	mesh = NULL;
-	maxSpeed = 0.0f;
 	isMeshMode = true;
 	photoTexID = 0;
 	// pixel sorting stuff
@@ -91,13 +90,14 @@ void initOpenGL() {
 	// Locate uniforms
 	uniXform = glGetUniformLocation(shader, "xform");
 
-	// Compile and link new overlay shader program
+	// Compile and link overlay shader program
 	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v_overlay.glsl"));
 	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f_overlay.glsl"));
 	overlayShader = linkProgram(shaders);
 	for (auto s : shaders) glDeleteShader(s);
 	shaders.clear();
 
+	// Compile and link skybox shader program
 	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v_skybox.glsl"));
 	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f_skybox.glsl"));
 	skyboxShader = linkProgram(shaders);
@@ -109,6 +109,7 @@ void initOpenGL() {
 	updateSkybox();
 	setupSkybox();
 	
+	// set up screen space quad for pixel sorting
 	float quadVertices[] = { //image plane that pixels are sorted on
 		// positions (x, y)   // texCoords (u, v)
 		-1.0f,  1.0f,         0.0f, 1.0f,
@@ -125,17 +126,14 @@ void initOpenGL() {
 	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 
-	// Attribute 0: Position (vec2)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	// Attribute 1: TexCoords (vec2)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-	// 5. Create the Texture that will hold the sorted pixels
+	// texture to pixel sort
 	glGenTextures(1, &screenTexID);
 	glBindTexture(GL_TEXTURE_2D, screenTexID);
-	// Set filtering so the pixels look sharp or smooth
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -143,17 +141,16 @@ void initOpenGL() {
 
 	glBindVertexArray(0);
 
-	// Setup Dear ImGui context
+	// setup ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-	// Setup Platform/Renderer backends
 	ImGui_ImplGLUT_Init();
 	ImGui_ImplGLUT_InstallFuncs();
 	ImGui_ImplOpenGL3_Init("#version 330");
 
-	// Setup Style
+	// dark mode
 	ImGui::StyleColorsDark();
 
 	assert(glGetError() == GL_NO_ERROR);
@@ -163,7 +160,7 @@ void initOpenGL() {
 void display() {
 	static bool firstFrame = true;
 	if (firstFrame) {
-		// Re-take control of the mouse AFTER ImGui has initialized in the main loop
+		// re-take control of the mouse after ImGui has initialized in the main loop
 		glutMouseFunc(mouseBtn);
 		glutMotionFunc(mouseMove);
 
@@ -176,35 +173,31 @@ void display() {
 	
 		// Clear the back buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// Get ready to draw
 		if (isMeshMode) MeshMode(); else PhotoMode();
 
-		
-
 		pixelData.resize(width * height * 4);
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData.data());
-		///////////////
+		/////// PIXEL SORTING!! ////////
 		if (isVertSort) sortPixelsVertical(); else sortPixelsHorizontal();
-		///////////////
+		////////////////////////////////
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(overlayShader);
 
-		// Upload the modified pixel array to our texture
+		// upload the modified pixel array to texture
 		glBindTexture(GL_TEXTURE_2D, screenTexID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixelData.data());
 
-		// Draw the full-screen rectangle with our texture on it
+		// draw the fullscreen rectangle with our texture on it
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 		glDisable(GL_DEPTH_TEST);
 
 		createIMGuiWindow();
-
 		assert(glGetError() == GL_NO_ERROR);
 
-		// Revert context state
+		// revert context state
 		glUseProgram(0);
 
 		// Display the back buffer
@@ -250,11 +243,10 @@ void MeshMode() {
 	// Draw the mesh
 	mesh->draw();
 
-	// 2. Setup Skybox rendering
-	glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
+	// setup skybox rendering
+	glDepthFunc(GL_LEQUAL); 
 	glUseProgram(skyboxShader);
 
-	// Pass Proj and View (View must be mat4(mat3(view)) in shader to stay centered)
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view*rot));
 
@@ -264,7 +256,7 @@ void MeshMode() {
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 
-	glDepthFunc(GL_LESS); // Reset depth function
+	glDepthFunc(GL_LESS);
 }
 
 void PhotoMode() {
@@ -272,24 +264,9 @@ void PhotoMode() {
 	glDisable(GL_DEPTH_TEST); 
 	if (photoTexID == 0) photoTexID = loadTexture("photos/arches.jpg");
 
-	float windowAsp = (float)width / (float)height;
-	float photoAsp = (float)photoW / (float)photoH;
+	glUniformMatrix4fv(glGetUniformLocation(overlayShader, "xform"), 1, GL_FALSE, value_ptr(mat4(1.0f)));
 
-	mat4 model2D = mat4(1.0f);
-	if (photoAsp > windowAsp) {
-		// Image is wider than window (Letterbox top/bottom)
-		model2D = scale(mat4(1.0f), vec3(1.0f, windowAsp / photoAsp, 1.0f));
-	}
-	else {
-		// Image is taller than window (Pillarbox sides)
-		model2D = scale(mat4(1.0f), vec3(photoAsp / windowAsp, 1.0f, 1.0f));
-	}
-
-	glUniformMatrix4fv(glGetUniformLocation(overlayShader, "xform"), 1, GL_FALSE, value_ptr(model2D));
-
-	
-
-	// 3. Bind the photo and draw the quad
+	// bind the photo and draw the quad
 	glBindTexture(GL_TEXTURE_2D, photoTexID);
 	glBindVertexArray(quadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -297,12 +274,12 @@ void PhotoMode() {
 
 //// interactive control functions /////////////////////////////////////////
 void createIMGuiWindow() {
-	// Start the ImGui frame
+	// start the ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
 	ImGui::NewFrame();
 
-	// Create the Window
+	// create GUI window
 	ImGui::Begin("Pixel Sort Settings");
 	ImGui::Checkbox("Toggle Mesh/Photo Modes", &isMeshMode);
 
@@ -319,9 +296,8 @@ void createIMGuiWindow() {
 	}
 	else {
 		if (ImGui::Combo("Select Photo", &currPhotoIdx, photoLabels.data(), (int)photoLabels.size())) {
-			// Selection changed! 
 			if (photoTexID != 0) {
-				glDeleteTextures(1, &photoTexID); // Clean up the old one
+				glDeleteTextures(1, &photoTexID); 
 			}
 			photoTexID = loadTexture(photoFiles[currPhotoIdx].c_str());
 		}
@@ -333,10 +309,7 @@ void createIMGuiWindow() {
 		updateAssetList("skybox", skyboxFolders, skyboxLabels);
 	}
 	
-	
-
 	static int currentSort = 2;
-
 	if (ImGui::Combo("Sort Mode", &currentSort, sortItems, 6)) {
 		sType = static_cast<sortType>(currentSort);
 	}
@@ -350,13 +323,12 @@ void createIMGuiWindow() {
 		ImGui::SliderInt("Noise Amount", &noiseAmount, 2, 100);
 	}
 	
-	
 	ImGui::Checkbox("Flip Sort Direction", &flipSortDir);
 	ImGui::Checkbox("Sort Vertically", &isVertSort);
 
 	ImGui::End();
 
-	// Rendering ImGui
+	// rendering ImGui
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -377,8 +349,8 @@ void keyRelease(unsigned char key, int x, int y) {
 }
 
 void mouseBtn(int button, int state, int x, int y) {
-	ImGui_ImplGLUT_MouseFunc(button, state, x, y); // Let ImGui try to use it
-	if (ImGui::GetIO().WantCaptureMouse) return;      // If ImGui used it, stop here
+	ImGui_ImplGLUT_MouseFunc(button, state, x, y);
+	if (ImGui::GetIO().WantCaptureMouse) return;
 	
 	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON) {
 		// Activate rotation mode
@@ -393,32 +365,33 @@ void mouseBtn(int button, int state, int x, int y) {
 
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
+			// activate light movement mode
 			rightMouseDown = true;
 			lastMouseX = x;
 			lastMouseY = y;
 		}
 		else {
 			rightMouseDown = false;
+			// deactivate light movement mode
 		}
 	}
 
 	if (state == GLUT_DOWN && button == GLUT_MIDDLE_BUTTON) {
+		// activate panning mode
 		isPanning = true;
 		camPanOrigin = camPan;
-		mouseOrigin = vec2(x, y); // Reuse mouseOrigin
+		mouseOrigin = vec2(x, y); 
 	}
 	if (state == GLUT_UP && button == GLUT_MIDDLE_BUTTON) {
+		// deactivate panning mode
 		isPanning = false;
 	}
-
 }
 
 void mouseWheel(int wheel, int direction, int x, int y) {
-	// Feed to ImGui
 	ImGuiIO& io = ImGui::GetIO();
 	io.MouseWheel += (float)direction;
 	if (io.WantCaptureMouse) return;
-	// Direction is 1 for up, -1 for down
 	float zoomSpeed = 0.5f;
 	camCoords.z = std::clamp(camCoords.z - (direction * zoomSpeed), 0.1f, 50.0f);
 
@@ -444,11 +417,15 @@ void mouseMove(int x, int y) {
 		}
 	}
 	if (rightMouseDown) {
-		float dx = (x - lastMouseX) * 0.05f; // Sensitivity
+		float dx = (x - lastMouseX) * 0.01f;
 		float dy = (y - lastMouseY) * 0.05f;
 
-		lightPos.x += dx;
-		lightPos.y -= dy; // Invert Y because mouse 0 is at the top
+		lightAngle += dx;
+		lightHeight -= dy;
+
+		lightPos.x = sin(lightAngle) * lightDistance;
+		lightPos.z = cos(lightAngle) * lightDistance;
+		lightPos.y = lightHeight;
 
 		lastMouseX = x;
 		lastMouseY = y;
@@ -456,13 +433,10 @@ void mouseMove(int x, int y) {
 	}
 	if (isPanning) {
 		vec2 mouseDelta = vec2(x, y) - mouseOrigin;
-
-		// Scale the pan speed based on distance (camCoords.z) 
-		// so it doesn't feel too fast/slow when zoomed
 		float panScale = camCoords.z * 0.002f;
 
 		camPan.x = camPanOrigin.x + mouseDelta.x * panScale;
-		camPan.y = camPanOrigin.y - mouseDelta.y * panScale; // Flip Y because mouse Y is top-down
+		camPan.y = camPanOrigin.y - mouseDelta.y * panScale;
 
 		glutPostRedisplay();
 	}
@@ -490,21 +464,24 @@ void cleanup() {
 //// pixel sorting functions //////////////////////////////////////////////
 void sortPixelsHorizontal() {
 	
+	// sort spans by row
 	for (int y = 0; y < height; y++) {
 		uint32_t* row = (uint32_t*)&pixelData[y * width * 4];
 
 		int x = 0;
 		while (x < width) {
-			// Find the start of a span (pixel is bright enough)
+			// find the start of a span (pixel is bright enough)
 			while (x < width && !isColorInThresh(row[x])) x++;
 			int start = x;
 
-			// Find the end of that span
+			// find the end of that span
+			// if using mask, go until pixel is outside of threshold
 			if (useMask) while (x < width && isColorInThresh(row[x])) x++;
+			// if not using mask, length is determined by computed span length
 			else { x += (rand() % noiseAmount) + randOff; x = x >= width ? width : x; }
 			int end = x;
 
-			// Sort only that segment
+			// sort only that segment
 			if (start < end) {
 				sort(row + start, row + end, compareColors);
 			}
@@ -515,28 +492,32 @@ void sortPixelsHorizontal() {
 void sortPixelsVertical() {
 	// iterate through each column
 	for (int x = 0; x < width; x++) {
-		// Extract the column into a temporary vector
+		// extract the column into a temporary vector
 		vector<uint32_t> column(height);
 		for (int y = 0; y < height; y++) {
-			// Memory math: (y * width) skips rows, (+ x) picks the column
 			column[y] = ((uint32_t*)pixelData.data())[y * width + x];
 		}
 
-		// perform the span-based sorting on this column vector
 		int y = 0;
 		while (y < height) {
+			// find the start of a span (pixel is bright enough)
 			while (y < height && !isColorInThresh(column[y])) y++;
 			int start = y;
+
+			// find the end of that span
+			// if using mask, go until pixel is outside of threshold
 			if (useMask) while (y < height && isColorInThresh(column[y])) y++;
+			// if not using mask, length is determined by computed span length
 			else { y += (rand() % noiseAmount) + randOff; y = y >= height ? height : y; }
 			int end = y;
 
+			// sort only that segment
 			if (start < end) {
 				sort(column.begin() + start, column.begin() + end, compareColors);
 			}
 		}
 
-		// Write the sorted column back into the original pixelData
+		// write the sorted column back into the original pixelData
 		for (int y = 0; y < height; y++) {
 			((uint32_t*)pixelData.data())[y * width + x] = column[y];
 		}
@@ -551,7 +532,7 @@ bool isColorInThresh(uint32_t c) {
 bool compareColors(uint32_t a, uint32_t b) {
 	uint32_t A, B;
 	switch (sType) {
-	case RED: A = (a & 0x000000FF); B = (b & 0x000000FF); break;
+	case RED: A = (a & 0xFF); B = (b & 0xFF); break;
 	case GREEN: A = (a >> 8) & 0xFF; B = (b >> 8) & 0xFF; break;
 	case BLUE: A = (a >> 16) & 0xFF; B = (b >> 16) & 0xFF; break;
 	case HUE: return flipSortDir ? (getHue(a) < getHue(b)) : (getHue(a) > getHue(b));
@@ -587,7 +568,7 @@ float getHue(uint32_t c) {
 	float diff = cmax - cmin;
 	if (diff <= 0.0f) return 0.0f;
 
-	float H;
+	float H = 0;
 	float invDiff = 1.0f / diff;
 
 	if (cmax == r) { H = (g - b) * invDiff; if (H < 0.0f) H += 6.0f; }
@@ -608,7 +589,6 @@ void updateAssetList(const string& folderPath, vector<string>& files,
 
 	for (const auto& entry : fs::directory_iterator(folderPath)) {
 		string ext = entry.path().extension().string();
-		// Check for common image extensions
 		if (folderPath == "photos" && ext == ".jpg" || ext == ".jpeg" || ext == ".png") {
 			files.push_back(entry.path().string());
 		} 
@@ -620,7 +600,7 @@ void updateAssetList(const string& folderPath, vector<string>& files,
 		}
 	}
 
-	// Prepare labels for the ImGui Combo box
+	// prepare labels for the ImGui dropdown
 	for (const auto& s : files) {
 		labels.push_back(s.c_str());
 	}
@@ -633,7 +613,7 @@ GLuint loadTexture(const char* path) {
 
 	photoW = w; photoH = h;
 
-	// trying to scale window to image sizes
+	// trying to scale window to image sizes (not working D: )
 	if (data) {
 		//glutReshapeWindow(w/10, h/10);
 	}
@@ -661,7 +641,6 @@ GLuint loadCubemap(vector<string> faces) {
 	for (unsigned int i = 0; i < faces.size(); i++) {
 		unsigned char* data = stbi_load(faces[i].c_str(), &w, &h, &nrChannels, 0);
 		if (data) {
-			// Target specific face: GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc.
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 				0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			stbi_image_free(data);
@@ -735,12 +714,10 @@ void setupSkybox() {
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-	// Unbind to stay clean
 	glBindVertexArray(0);
 }
 
 void updateSkybox() {
-	// 1. Delete the old texture if it exists
 	if (cubemapTexture != 0) {
 		glDeleteTextures(1, &cubemapTexture);
 	}

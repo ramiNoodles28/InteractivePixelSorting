@@ -23,8 +23,8 @@ int main(int argc, char** argv) {
 //// initializing functions //////////////////////////////////////////////////
 void initState() {
 	// initialize global state
-	width = 1600;
-	height = 1000;
+	width = 1500;
+	height = 800;
 	shader = 0;
 	uniXform = 0;
 	vao = 0;
@@ -35,14 +35,14 @@ void initState() {
 	photoTexID = 0;
 	// pixel sorting stuff
 	sType = LUM;
-	minThresh = 50;
-	maxThresh = 200;
+	minThresh = 0;
+	maxThresh = 0;
 	limitSpans = false;
 	isVertSort = false;
 	flipSortDir = false;
 	srand(time(0));
-	maxSpanLength = 16;
-	noiseAmount = 5;
+	maxSpanLength = 3;
+	noiseAmount = 3;
 
 	// updating photo/model lists
 	updateAssetList("photos", photoFiles, photoLabels);
@@ -645,6 +645,7 @@ GLuint loadCubemap(vector<string> faces) {
 	GLuint texID;
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
+	stbi_set_flip_vertically_on_load(false);
 
 	int w, h, nrChannels;
 	for (unsigned int i = 0; i < faces.size(); i++) {
